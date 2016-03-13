@@ -1,29 +1,12 @@
 var express = require('express');
+var bodyParser = require('body-parser');
+
 var app = express();
 var PORT = process.env.PORT || 3000;
 
-var todos = [
-  {
-    id: 0,
-    description: 'Cocopops Test',
-    completed: true
-  },
-  {
-    id: 1,
-    description: 'start NodeJS tutorial',
-    completed: true
-  },
-  {
-    id: 2,
-    description: 'Complete the NodeJS tutorial',
-    completed: false
-  },
-  {
-    id: 3,
-    description: 'Build small websites using NodeJS',
-    completed: false
-  }
-]
+var todos = []
+var todoId = 0;
+app.use(bodyParser.json());
 
 app.get('/', function(req,res){
   res.send('TODO APP root');
@@ -51,6 +34,22 @@ app.get('/todos/:id', function(req,res){
 
 
 });
+
+app.post('/todos', function(req,res){
+  var body = req.body;
+  if(body.description && typeof body.completed == "boolean"){
+    todoId ++;
+    var aTodo = {
+      id : todoId,
+      description : body.description,
+      completed : body.completed
+    }
+    todos.push(aTodo);
+  }
+  console.log('description: '+ req.body.description);
+  res.send(req.body);
+  console.log(todos);
+})
 
 
 app.listen(PORT, function(){
