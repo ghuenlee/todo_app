@@ -50,7 +50,21 @@ app.post('/todos', function(req,res){
   console.log('description: '+ req.body.description);
   res.send(req.body);
   console.log(todos);
-})
+});
+
+app.delete('/todos/:id', function(req,res){
+  var paramId = parseInt(req.params.id, 10);
+  var requestedTodo = _.findWhere(todos, { id: paramId});
+  if(requestedTodo){
+    todos = _.without(todos, requestedTodo );
+    console.log('Removed todo at id: '+paramId);
+    res.json({ "result" : "Todo removed",
+               "removed todo": requestedTodo});
+  }
+  else {
+    res.status(404).send("Provided id not matching.");
+  }
+});
 
 
 app.listen(PORT, function(){
