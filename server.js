@@ -1,5 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var _ = require('underscore');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -18,15 +19,9 @@ app.get('/todos', function(req,res){
 
 app.get('/todos/:id', function(req,res){
   var paramId = parseInt(req.params.id, 10);
-  var requestedTodo;
-  todos.forEach(function(todo){
-    if  (todo.id == paramId) {
-      requestedTodo = todo;
-    }
-  });
+  var requestedTodo = _.findWhere(todos, { id: paramId});
   if (requestedTodo){
     res.json(requestedTodo);
-    ;
   }
   else if (!requestedTodo) {
     res.status(404).send('Requested TODO not found!');
@@ -37,7 +32,10 @@ app.get('/todos/:id', function(req,res){
 
 app.post('/todos', function(req,res){
   var body = req.body;
-  if(body.description && typeof body.completed == "boolean"){
+  body = _.pick(body, 'description', 'completed');
+  body.description = body.description.trim();
+
+  if(_.isString(body.description) && _.isBoolean(body.completed) && body.description.trim().length > 0){
     todoId ++;
     var aTodo = {
       id : todoId,
@@ -45,6 +43,9 @@ app.post('/todos', function(req,res){
       completed : body.completed
     }
     todos.push(aTodo);
+  }
+  else {
+    return res.status(400).send('Error 400: Data provided is inadequate.');
   }
   console.log('description: '+ req.body.description);
   res.send(req.body);
