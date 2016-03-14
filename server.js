@@ -66,6 +66,37 @@ app.delete('/todos/:id', function(req,res){
   }
 });
 
+app.put('/todos/:id', function(req,res){
+  var body =_.pick(req.body, 'description', 'completed');
+  var validatedAttributes = {};
+  var paramId = parseInt(req.params.id, 10);
+  var requestedTodo = _.findWhere(todos, { id: paramId});
+
+  if(!requestedTodo){
+    return res.status(404).send("Todo unspecified/Not found.");
+  }
+
+  if( body.hasOwnProperty('completed') && _.isBoolean(body.completed)){
+    validatedAttributes.completed = body.completed;
+  }
+  else if (body.hasOwnProperty('completed')){
+    return res.status(400).send("Bad request. Check the attributes");
+  }
+
+  if( body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length >0) {
+    validatedAttributes.description = body.description.trim();
+  }
+  else if (body.hasOwnProperty('description')){
+    return res.status(400).send("Bad request. Check the attributes");
+  }
+
+  // validatedAttributes.id = requestedTodo.id;
+  _.extend(requestedTodo, validatedAttributes);
+  res.json(requestedTodo);
+
+
+});
+
 
 app.listen(PORT, function(){
   console.log('Express started on port: '+ PORT);
