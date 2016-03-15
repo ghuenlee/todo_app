@@ -14,35 +14,37 @@ app.get('/', function(req,res){
 });
 
 app.get('/todos', function(req,res){
-  var queryParams = req.query;
-  var filteredTodos = todos;
+  var query = req.query;
 
-  if (queryParams.hasOwnProperty('completed') && queryParams.completed == 'true'){
-    filteredTodos = _.where(filteredTodos, { completed: true});
+  var where = {};
+
+  if (query.hasOwnProperty('completed') && query.completed == 'true'){
+  where.completed = true;
   }
-  else if (queryParams.hasOwnProperty('completed') && queryParams.completed == 'false'){
-    filteredTodos = _.where(filteredTodos, { completed: false});
+  else if (query.hasOwnProperty('completed') && query.completed == 'false'){
+  where.completed = false;
   }
-  if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0)
+  if (query.hasOwnProperty('q') && query.q.length > 0)
   {
-    filteredTodos = _.filter(filteredTodos, function (todo){
-      console.log(todo.description.toLowerCase());
-      console.log(queryParams.q.toLowerCase());
-      return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
-    });
-
-    res.json(filteredTodos);
+    where.description = {
+      $like: '%' + query.q + '%'
+    }
   }
 
+    console.log(where);
 
-  res.json(filteredTodos);
-})
+  db.todo.findAll({ where }).then(function(todos){
+    res.send(todos);
+  }, function(e){
+    res.status(500).send("Server Error");
+  });
+
+});
 
 app.get('/todos/:id', function(req,res){
   var paramId = parseInt(req.params.id, 10);
   db.todo.findById(paramId).then(function (todo){
     if (todo){
-      // todo = todo.toJSON;
       res.json(todo);
     }
     else if (!todo){
@@ -52,13 +54,6 @@ app.get('/todos/:id', function(req,res){
     res.status(500).send("Server error.");
   });
 
-  // var requestedTodo = _.findWhere(todos, { id: paramId});
-  // if (requestedTodo){
-  //   res.json(requestedTodo);
-  // }
-  // else if (!requestedTodo) {
-  //   res.status(404).send('Requested TODO not found!');
-  // }
 
 
 });
@@ -73,23 +68,6 @@ app.post('/todos', function(req,res){
     res.status(400).send('Cannot create todo');
   });
 
-//   body.description = body.description.trim();
-//
-//   if(_.isString(body.description) && _.isBoolean(body.completed) && body.description.trim().length > 0){
-//     todoId ++;
-//     var aTodo = {
-//       id : todoId,
-//       description : body.description,
-//       completed : body.completed
-//     }
-//     todos.push(aTodo);
-//   }
-//   else {
-//     return res.status(400).send('Error 400: Data provided is inadequate.');
-//   }
-//   console.log('description: '+ req.body.description);
-//   res.send(req.body);
-//   console.log(todos);
 });
 
 app.delete('/todos/:id', function(req,res){
@@ -130,7 +108,6 @@ app.put('/todos/:id', function(req,res){
     return res.status(400).send("Bad request. Check the attributes");
   }
 
-  // validatedAttributes.id = requestedTodo.id;
   _.extend(requestedTodo, validatedAttributes);
   res.json(requestedTodo);
 
