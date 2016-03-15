@@ -1,7 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('underscore');
-
+var db = require('./db.js');
 var app = express();
 var PORT = process.env.PORT || 3000;
 
@@ -54,23 +54,30 @@ app.get('/todos/:id', function(req,res){
 app.post('/todos', function(req,res){
   var body = req.body;
   body = _.pick(body, 'description', 'completed');
-  body.description = body.description.trim();
 
-  if(_.isString(body.description) && _.isBoolean(body.completed) && body.description.trim().length > 0){
-    todoId ++;
-    var aTodo = {
-      id : todoId,
-      description : body.description,
-      completed : body.completed
-    }
-    todos.push(aTodo);
-  }
-  else {
-    return res.status(400).send('Error 400: Data provided is inadequate.');
-  }
-  console.log('description: '+ req.body.description);
-  res.send(req.body);
-  console.log(todos);
+  db.todo.create(body).then(function(todo){
+    res.json(todo.toJSON());
+  }, function(e){
+    res.status(400).send('Cannot create todo');
+  });
+
+//   body.description = body.description.trim();
+//
+//   if(_.isString(body.description) && _.isBoolean(body.completed) && body.description.trim().length > 0){
+//     todoId ++;
+//     var aTodo = {
+//       id : todoId,
+//       description : body.description,
+//       completed : body.completed
+//     }
+//     todos.push(aTodo);
+//   }
+//   else {
+//     return res.status(400).send('Error 400: Data provided is inadequate.');
+//   }
+//   console.log('description: '+ req.body.description);
+//   res.send(req.body);
+//   console.log(todos);
 });
 
 app.delete('/todos/:id', function(req,res){
@@ -118,7 +125,8 @@ app.put('/todos/:id', function(req,res){
 
 });
 
-
-app.listen(PORT, function(){
-  console.log('Express started on port: '+ PORT);
-})
+db.sequelInst.sync().then(function(){
+  app.listen(PORT, function(){
+    console.log('Express started on port: '+ PORT);
+  });
+});
