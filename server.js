@@ -40,13 +40,25 @@ app.get('/todos', function(req,res){
 
 app.get('/todos/:id', function(req,res){
   var paramId = parseInt(req.params.id, 10);
-  var requestedTodo = _.findWhere(todos, { id: paramId});
-  if (requestedTodo){
-    res.json(requestedTodo);
-  }
-  else if (!requestedTodo) {
-    res.status(404).send('Requested TODO not found!');
-  }
+  db.todo.findById(paramId).then(function (todo){
+    if (todo){
+      // todo = todo.toJSON;
+      res.json(todo);
+    }
+    else if (!todo){
+      res.status(404).send("Todo not found!");
+    }
+  }, function(e){
+    res.status(500).send("Server error.");
+  });
+
+  // var requestedTodo = _.findWhere(todos, { id: paramId});
+  // if (requestedTodo){
+  //   res.json(requestedTodo);
+  // }
+  // else if (!requestedTodo) {
+  //   res.status(404).send('Requested TODO not found!');
+  // }
 
 
 });
