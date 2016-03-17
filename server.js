@@ -72,16 +72,19 @@ app.post('/todos', function(req,res){
 
 app.delete('/todos/:id', function(req,res){
   var paramId = parseInt(req.params.id, 10);
-  var requestedTodo = _.findWhere(todos, { id: paramId});
-  if(requestedTodo){
-    todos = _.without(todos, requestedTodo );
-    console.log('Removed todo at id: '+paramId);
-    res.json({ "result" : "Todo removed",
-               "removed todo": requestedTodo});
+  var where = {
+    id: paramId
   }
-  else {
-    res.status(404).send("Provided id not matching.");
-  }
+  db.todo.destroy({ where: where }).then(function(rowsDeleted){
+    if(rowsDeleted > 0){
+      res.send("Successfully deleted " + rowsDeleted + " todo!");
+    }
+    else {
+      res.status(404).send("No row deleted. please check the provided id.");
+    }
+  }, function(e){
+    res.status(500).send("Server Error");
+  });
 });
 
 app.put('/todos/:id', function(req,res){
