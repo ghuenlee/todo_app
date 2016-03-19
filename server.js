@@ -89,32 +89,51 @@ app.delete('/todos/:id', function(req,res){
 
 app.put('/todos/:id', function(req,res){
   var body =_.pick(req.body, 'description', 'completed');
-  var validatedAttributes = {};
+  var attributes = {};
   var paramId = parseInt(req.params.id, 10);
-  var requestedTodo = _.findWhere(todos, { id: paramId});
 
-  if(!requestedTodo){
-    return res.status(404).send("Todo unspecified/Not found.");
+  if( body.hasOwnProperty('completed')){
+    attributes.completed = body.completed;
   }
 
-  if( body.hasOwnProperty('completed') && _.isBoolean(body.completed)){
-    validatedAttributes.completed = body.completed;
-  }
-  else if (body.hasOwnProperty('completed')){
-    return res.status(400).send("Bad request. Check the attributes");
+  if( body.hasOwnProperty('description')) {
+    attributes.description = body.description;
   }
 
-  if( body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length >0) {
-    validatedAttributes.description = body.description.trim();
-  }
-  else if (body.hasOwnProperty('description')){
-    return res.status(400).send("Bad request. Check the attributes");
-  }
+  db.todo.findById(paramId)
+  .then(function(todo){ // First Promise Chain
+    if(todo){
+      return todo.update(attributes, { typeValidation: true });
+    }
+    else{
+      res.status(404).send("No todo corresponding to id");
+    }
+  }, function () {
+    res.status(500).send("Server Error");
+  })
+  .then(function(todo) { // Second Promise Chain
+    res.send(todo);
+  }, function (e){
+    res.status(400).json(e);
+  });
 
-  _.extend(requestedTodo, validatedAttributes);
-  res.json(requestedTodo);
+});
+app.get('/users', function(req,res){
+  db.user.findAll().then(function(users){
+    res.json(users);
+  }, function(e){
+    res.status(500).send("Server Error");
+  })
+})
 
+app.post('/users', function(req,res){
+  var body =_.pick(req.body, 'email', 'password');
 
+  db.user.create(body).then(function(user){
+    res.json(user);
+  }, function(e){
+    res.status(400).json(e);
+  });
 });
 
 db.sequelInst.sync().then(function(){
