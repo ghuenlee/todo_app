@@ -65,6 +65,9 @@ module.exports = function (sequelInst, DataTypes){
             })
 
           }
+          else {
+            return reject();
+          }
         })
       }
     },
