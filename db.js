@@ -15,7 +15,6 @@ if ( env == 'production'){
   });
 }
 
-
 var db = {};
 
 db.todo = sequelInst.import(__dirname + '/models/todo.js');
