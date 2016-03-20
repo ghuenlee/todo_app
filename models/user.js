@@ -2,7 +2,7 @@ var bcrypt = require('bcrypt');
 var _ = require('underscore');
 
 module.exports = function (sequelInst, DataTypes){
-  return sequelInst.define('user', {
+  var user = sequelInst.define('user', {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -42,6 +42,32 @@ module.exports = function (sequelInst, DataTypes){
         }
       }
     },
+    classMethods:{
+      authenticate: function(body){
+        return new Promise( function(resolve, reject){
+          if(typeof body.email == 'string' && body.email.length > 0 && typeof body.password == 'string' && body.password.length > 0) {
+            body.email = body.email.toLowerCase();
+            user.findOne({
+              where: {
+                email: body.email
+              }
+            })
+            .then(function(user){
+              if(!user || !bcrypt.compareSync(body.password, user.get('hashedPassword'))){
+                return reject();
+              }else {
+                resolve(user);
+              }
+
+
+            }, function(e){
+              return reject();
+            })
+
+          }
+        })
+      }
+    },
     instanceMethods:{
       toPublicJSON: function(){
         var json = this.toJSON();
@@ -50,4 +76,5 @@ module.exports = function (sequelInst, DataTypes){
       }
     }
   });
+  return user;
 };
