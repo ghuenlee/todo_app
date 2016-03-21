@@ -1,5 +1,7 @@
 var bcrypt = require('bcrypt');
 var _ = require('underscore');
+var cryptojs = require('crypto-js');
+var jwt = require('jsonwebtoken');
 
 module.exports = function (sequelInst, DataTypes){
   var user = sequelInst.define('user', {
@@ -76,6 +78,24 @@ module.exports = function (sequelInst, DataTypes){
         var json = this.toJSON();
         return _.pick(json, 'id', 'email', 'createdAt', 'updatedAt');
 
+      },
+      generateToken: function(type){
+        if(!_.isString(type)){
+          return undefined;
+        }
+        try {
+          var userId = this.get('id');
+          var stringData = JSON.stringify({ id: userId, type: type});
+          var encryptedData = cryptojs.AES.encrypt(stringData, 'AAAA123456').toString();
+          var token = jwt.sign({
+            token: encryptedData
+          }, 'FluckU^54@');
+          return token;
+        } catch (e){
+          console.log (userId);
+          console.log(e);
+          return undefined;
+        }
       }
     }
   });

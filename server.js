@@ -140,14 +140,21 @@ app.post('/users', function(req,res){
 app.post('/users/login', function(req,res){
   var body = _.pick(req.body, 'email', 'password');
   db.user.authenticate(body).then(function(user){
-    res.json(user.toPublicJSON());
+    var authToken = user.generateToken('authentication');
+    if(authToken){
+      res.header('Auth',authToken).json(user.toPublicJSON());
+    }
+    else {
+      res.status(401).send();
+    }
+
   }, function(){
     res.status(401).send("Authentication Failed");
   });
 
 });
 
-db.sequelInst.sync({force: true}).then(function(){
+db.sequelInst.sync(/*{force: true}*/).then(function(){
   app.listen(PORT, function(){
     console.log('Express started on port: '+ PORT);
   });
