@@ -71,6 +71,31 @@ module.exports = function (sequelInst, DataTypes){
             return reject();
           }
         })
+      },
+      findByToken: function(token){
+        return new Promise(function(resolve, reject){
+          try{
+            var decryptedJWT = jwt.verify(token, 'FluckU^54@');
+            var decryptedToken = cryptojs.AES.decrypt(decryptedJWT.token, 'AAAA123456');
+            var tokenData = JSON.parse(decryptedToken.toString(cryptojs.enc.Utf8));
+            console.log(tokenData);
+
+            user.findById(tokenData.id).then(function(user){
+              if(user){
+                resolve(user);
+              }
+              else {
+                reject();
+              }
+            }, function(e){
+              reject();
+            })
+          }catch(e){
+            reject();
+          }
+
+
+        });
       }
     },
     instanceMethods:{
