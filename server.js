@@ -17,8 +17,7 @@ app.get('/', function(req,res){
 
 app.get('/todos', middleware.requireAuthentication, function(req,res){
   var query = req.query;
-
-  var where = {};
+  var where = { userId: req.user.get('id')};
 
   if (query.hasOwnProperty('completed') && query.completed == 'true'){
   where.completed = true;
@@ -45,7 +44,7 @@ app.get('/todos', middleware.requireAuthentication, function(req,res){
 
 app.get('/todos/:id', middleware.requireAuthentication, function(req,res){
   var paramId = parseInt(req.params.id, 10);
-  db.todo.findById(paramId).then(function (todo){
+  db.todo.findOne({where: { id: paramId, userId: req.user.get('id')}}).then(function (todo){
     if (todo){
       res.json(todo);
     }
@@ -65,7 +64,11 @@ app.post('/todos', middleware.requireAuthentication, function(req,res){
   body = _.pick(body, 'description', 'completed');
 
   db.todo.create(body).then(function(todo){
-    res.json(todo.toJSON());
+    req.user.addTodo(todo).then(function(){
+      return todo.reload();
+    }).then(function(todo){
+      res.json(todo.toJSON());
+    });
   }, function(e){
     res.status(400).send('Cannot create todo');
   });
@@ -75,7 +78,8 @@ app.post('/todos', middleware.requireAuthentication, function(req,res){
 app.delete('/todos/:id', middleware.requireAuthentication, function(req,res){
   var paramId = parseInt(req.params.id, 10);
   var where = {
-    id: paramId
+    id: paramId,
+    userId: req.user.get('id')
     }
   db.todo.destroy({ where: where }).then(function(rowsDeleted){
     if(rowsDeleted > 0){
@@ -102,7 +106,7 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req,res){
     attributes.description = body.description;
   }
 
-  db.todo.findById(paramId)
+  db.todo.findOne({where: { id: paramId, userId: req.user.get('id')}})
   .then(function(todo){ // First Promise Chain
     if(todo){
       return todo.update(attributes, { typeValidation: true });

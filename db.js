@@ -19,6 +19,8 @@ var db = {};
 
 db.todo = sequelInst.import(__dirname + '/models/todo.js');
 db.user = sequelInst.import(__dirname + '/models/user.js');
+db.todo.belongsTo(db.user);
+db.user.hasMany(db.todo);
 db.sequelInst = sequelInst;
 db.sequelLib = sequelLib;
 
